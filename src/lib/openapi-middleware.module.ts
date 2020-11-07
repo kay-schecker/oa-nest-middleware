@@ -1,14 +1,14 @@
 import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { OpenApiMiddlewareService } from './openapi-middleware.service';
-import { OpenApiMiddlewareExceptionService } from './openapi-middleware-exception.service';
 import { dereference } from 'swagger-parser';
 import { OpenAPIV3 } from 'openapi-types';
 import { MiddlewareConfig } from './config/openapi-middleware.config';
 import { MiddlewareDefaultAdapter } from './adapter/middleware-default-adapter';
+import { MiddlewareErrorService } from './error/middleware-error.service';
 
 @Module({
   providers: [
-    OpenApiMiddlewareExceptionService,
+    MiddlewareErrorService,
   ]
 })
 export class OpenApiMiddlewareModule implements NestModule {
