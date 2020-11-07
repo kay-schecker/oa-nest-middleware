@@ -1,18 +1,18 @@
 import { BadRequestException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { OpenApiMiddlewareConfig } from './interfaces/openapi-middleware.config';
+import { MiddlewareConfig } from '../config/openapi-middleware.config';
 
-type K = keyof OpenApiMiddlewareConfig['exceptions'];
+type K = keyof MiddlewareConfig['exceptions'];
 
 @Injectable()
-export class OpenApiMiddlewareExceptionService {
+export class MiddlewareErrorService {
 
-  private readonly defaultExceptions: Required<OpenApiMiddlewareConfig['exceptions']> = {
+  private readonly defaultExceptions: Required<MiddlewareConfig['exceptions']> = {
     operationNotFound: new NotFoundException(),
-    badContentType: new BadRequestException(),
+    badResponseContentType: new BadRequestException(),
   }
 
   constructor(
-    @Inject(OpenApiMiddlewareConfig) private readonly options: OpenApiMiddlewareConfig,
+    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig,
   ) {
   }
 

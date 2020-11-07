@@ -1,11 +1,10 @@
 import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { OpenApiMiddlewareConfig } from './interfaces/openapi-middleware.config';
 import { OpenApiMiddlewareService } from './openapi-middleware.service';
-import { OpenApiAdapter } from './interfaces/openapi-adapter';
-import { OpenApiDefaultAdapter } from './adapters/openapi-default-adapter';
 import { OpenApiMiddlewareExceptionService } from './openapi-middleware-exception.service';
 import { dereference } from 'swagger-parser';
 import { OpenAPIV3 } from 'openapi-types';
+import { MiddlewareConfig } from './config/openapi-middleware.config';
+import { MiddlewareDefaultAdapter } from './adapter/middleware-default-adapter';
 
 @Module({
   providers: [
@@ -14,23 +13,21 @@ import { OpenAPIV3 } from 'openapi-types';
 })
 export class OpenApiMiddlewareModule implements NestModule {
 
-  static async register(options: OpenApiMiddlewareConfig): Promise<DynamicModule> {
+  static async register(options: MiddlewareConfig): Promise<DynamicModule> {
 
     options.spec = await dereference(options.spec) as OpenAPIV3.Document;
 
     return {
       module: OpenApiMiddlewareModule,
       providers: [
-        {provide: OpenApiMiddlewareConfig, useValue: options},
-        {
-          provide: OpenApiAdapter, useClass: options.adapter || OpenApiDefaultAdapter,
-        }
+        {provide: MiddlewareConfig, useValue: options},
+        {provide: MiddlewareDefaultAdapter, useClass: options.adapter || MiddlewareDefaultAdapter},
       ],
     }
   }
 
   constructor(
-    @Inject(OpenApiMiddlewareConfig) private readonly options: OpenApiMiddlewareConfig
+    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig
   ) {
   }
 

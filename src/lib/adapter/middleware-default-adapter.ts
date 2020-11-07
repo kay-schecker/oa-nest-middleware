@@ -3,13 +3,13 @@ import { OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
 import { flattenDeep, trimEnd, trimStart, uniq } from 'lodash';
 
-import { OpenApiAdapter } from '../interfaces/openapi-adapter';
-import { OpenApiMiddlewareConfig } from '../interfaces/openapi-middleware.config';
+import { MiddlewareAdapter } from './middleware-adapter.interface';
+import { OpenApiMiddlewareConfig } from '../config/openapi-middleware.config';
 import { parse as parseUrl } from 'url';
 import jsonpath from 'jsonpath';
 
 @Injectable()
-export class OpenApiDefaultAdapter implements OpenApiAdapter {
+export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
 
   protected readonly basePaths: string[];
   protected readonly spec: OpenApiMiddlewareConfig['spec'];

@@ -1,11 +1,11 @@
 import { Request } from 'express';
 import { OpenAPIV3 as _ } from 'openapi-types';
 
-export const OpenApiAdapter = Symbol('OpenApiAdapter');
+export const MiddlewareAdapter = Symbol('MiddlewareAdapter');
 
 type ReturnType<T> = Promise<T> | T
 
-export interface OpenApiAdapter {
+export interface MiddlewareAdapter {
 
   getOperationByRequest(req: Request): ReturnType<_.OperationObject>
   getRequiredPermissionsBySchema(schema: _.SchemaObject): ReturnType<string[]>
