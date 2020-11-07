@@ -7,7 +7,7 @@ import { MiddlewareAdapter } from '../adapter/middleware-adapter.interface';
 
 export const MiddlewareConfig = Symbol('MiddlewareConfig');
 
-type Error = HttpException | false | ((req: Request) => HttpException);
+type Error = HttpException | false | (() => HttpException);
 
 export interface MiddlewareConfig {
 

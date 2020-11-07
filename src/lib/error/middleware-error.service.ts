@@ -27,15 +27,15 @@ export class MiddlewareErrorService {
   ) {
   }
 
-  public throwIfFalsy(val: any, name: K, value?: Object) {
-    this.throwIfTruthy(!val, name, value);
+  throwIfFalsy(val: any, name: K) {
+    this.throwIfTruthy(!val, name);
   }
 
-  public throwIfTruthy(val: any, name: K, value?: Object) {
-    val && this.throw(name, value);
+  throwIfTruthy(val: any, name: K) {
+    val && this.throw(name);
   }
 
-  public throw(name: K, value?: Object) {
+  throw(name: K) {
 
     if (this.options.exceptions && this.options.exceptions[name] === false) {
       return;
@@ -44,7 +44,7 @@ export class MiddlewareErrorService {
     const e = (this.options.exceptions && this.options.exceptions[name]) || this.defaultExceptions[name];
 
     if (typeof e === 'function') {
-      throw (e as (v: any) => HttpException)(value);
+      throw e();
     }
 
     if (e instanceof HttpException) {

@@ -3,7 +3,6 @@ import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { MiddlewareErrorService } from './error/middleware-error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
-import { OpenAPIV3 as _ } from 'openapi-types';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware {
@@ -18,11 +17,11 @@ export class MiddlewareService implements NestMiddleware {
   async use(req: Request, res: Response, next: Function) {
 
     const operation = await this.adapter.getOperationByRequest(req);
-    this.errorService.throwIfFalsy(operation, 'reqOperationNotFound', req);
+    this.errorService.throwIfFalsy(operation, 'reqOperationNotFound');
     this.adapter.validateRequestHeaders(req, operation);
 
     const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
-    this.errorService.throwIfFalsy(responseContentType, 'resBadContentType', req);
+    this.errorService.throwIfFalsy(responseContentType, 'resBadContentType');
 
     const requiredPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
 
@@ -30,7 +29,7 @@ export class MiddlewareService implements NestMiddleware {
       const grantedPermissions = await this.adapter.getGrantedPermissionsByRequest(req);
 
       if (!grantedPermissions || grantedPermissions.length < 1) {
-        this.errorService.throw('reqUnauthorized', req);
+        this.errorService.throw('reqUnauthorized');
       }
     }
 

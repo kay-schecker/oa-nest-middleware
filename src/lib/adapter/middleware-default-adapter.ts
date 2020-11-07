@@ -87,14 +87,14 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
     // a content-type header was sent but unexpected
     this.errorService.throwIfTruthy(
       req.headers['content-type'] && !operation.requestBody,
-      'reqBadHeader', req
+      'reqBadHeader',
     );
 
     if (operation.requestBody) {
       // the requested content-type is not supported
       this.errorService.throwIfFalsy(
         operation.requestBody[req.headers['content-type']],
-        'reqBadContentType', req
+        'reqBadContentType',
       );
     }
   }
