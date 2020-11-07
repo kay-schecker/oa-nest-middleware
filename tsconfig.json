@@ -1,18 +1,21 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./",
+    "baseUrl": "./src",
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "incremental": true,
     "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "noLib": false,
     "outDir": "./dist",
     "removeComments": true,
-    "sourceMap": true,
-    "target": "es2017",
-    "paths": {
-      "@lib": ["./src/lib"]
-    }
-  }
+    "skipLibCheck": true,
+    "sourceMap": false,
+    "target": "es6",
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "tmp"]
 }
