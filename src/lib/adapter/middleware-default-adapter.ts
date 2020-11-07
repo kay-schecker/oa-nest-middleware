@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { flattenDeep, trimEnd, trimStart, uniq } from 'lodash';
 
 import { MiddlewareAdapter } from './middleware-adapter.interface';
-import { OpenApiMiddlewareConfig } from '../config/openapi-middleware.config';
+import { MiddlewareConfig } from '../config/openapi-middleware.config';
 import { parse as parseUrl } from 'url';
 import jsonpath from 'jsonpath';
 
@@ -12,13 +12,13 @@ import jsonpath from 'jsonpath';
 export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
 
   protected readonly basePaths: string[];
-  protected readonly spec: OpenApiMiddlewareConfig['spec'];
+  protected readonly spec: MiddlewareConfig['spec'];
 
   protected readonly paths: Map<string, _.PathItemObject> = new Map();
   protected readonly regPaths: Map<RegExp, _.PathItemObject> = new Map();
 
   constructor(
-    @Inject(OpenApiMiddlewareConfig) protected readonly options: OpenApiMiddlewareConfig,
+    @Inject(MiddlewareConfig) protected readonly options: MiddlewareConfig,
   ) {
     this.spec = options.spec
     this.basePaths = uniq(this.spec.servers.map(({url}) => parseUrl(url).pathname));
