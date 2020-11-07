@@ -7,6 +7,8 @@ import { MiddlewareAdapter } from '../adapter/middleware-adapter.interface';
 
 export const MiddlewareConfig = Symbol('MiddlewareConfig');
 
+type Error = HttpException | false | ((req: Request) => HttpException);
+
 export interface MiddlewareConfig {
 
   spec: OpenAPIV3.Document
@@ -15,8 +17,12 @@ export interface MiddlewareConfig {
   routes?: (string | Type<any> | RouteInfo)[]
 
   exceptions?: Partial<{
-    operationNotFound: HttpException | false | ((req: Request) => HttpException),
-    badResponseContentType: HttpException | false | ((req: Request) => HttpException),
+    reqUnauthorized: Error,
+    reqOperationNotFound: Error,
+    reqBadHeader: Error, // Content-Type header not supported
+    reqContentType: Error, // Content-Type header not supported
+    reqBadContentType: Error, // Content-Type header not supported
+    resBadContentType: Error, // Response Content-Type not found by req
   }>
 
 }

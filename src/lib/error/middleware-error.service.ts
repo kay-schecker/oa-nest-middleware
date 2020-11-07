@@ -1,4 +1,11 @@
-import { BadRequestException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException
+} from '@nestjs/common';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 
 type K = keyof MiddlewareConfig['exceptions'];
@@ -7,8 +14,12 @@ type K = keyof MiddlewareConfig['exceptions'];
 export class MiddlewareErrorService {
 
   private readonly defaultExceptions: Required<MiddlewareConfig['exceptions']> = {
-    operationNotFound: new NotFoundException(),
-    badResponseContentType: new BadRequestException(),
+    reqOperationNotFound: new NotFoundException(),
+    reqBadHeader: new BadRequestException(),
+    reqContentType: new BadRequestException(),
+    reqBadContentType: new BadRequestException(),
+    resBadContentType: new BadRequestException(),
+    reqUnauthorized: new UnauthorizedException(),
   }
 
   constructor(
@@ -17,9 +28,11 @@ export class MiddlewareErrorService {
   }
 
   public throwIfFalsy(val: any, name: K, value?: Object) {
-    if (!val) {
-      this.throw(name, value);
-    }
+    this.throwIfTruthy(!val, name, value);
+  }
+
+  public throwIfTruthy(val: any, name: K, value?: Object) {
+    val && this.throw(name, value);
   }
 
   public throw(name: K, value?: Object) {

@@ -7,6 +7,7 @@ import { MiddlewareAdapter } from './middleware-adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { parse as parseUrl } from 'url';
 import jsonpath from 'jsonpath';
+import { MiddlewareErrorService } from '../error/middleware-error.service';
 
 @Injectable()
 export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
@@ -19,6 +20,7 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
 
   constructor(
     @Inject(MiddlewareConfig) protected readonly options: MiddlewareConfig,
+    private readonly errorService: MiddlewareErrorService,
   ) {
     this.spec = options.spec
     this.basePaths = uniq(this.spec.servers.map(({url}) => parseUrl(url).pathname));
@@ -48,6 +50,10 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
   }
 
   getRequiredPermissionsByOperation(operation: _.OperationObject): string[] {
+    if (!operation.security || operation.security.length < 1) {
+      return;
+    }
+
     return flattenDeep(operation.security.map((sec) => Object.values(sec)));
   }
 
@@ -76,5 +82,21 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
   }
 
   getResponseContentTypeByRequest = (req: Request) => 'application/json';
+
+  validateRequestHeaders(req: Request, operation: _.OperationObject) {
+    // a content-type header was sent but unexpected
+    this.errorService.throwIfTruthy(
+      req.headers['content-type'] && !operation.requestBody,
+      'reqBadHeader', req
+    );
+
+    if (operation.requestBody) {
+      // the requested content-type is not supported
+      this.errorService.throwIfFalsy(
+        operation.requestBody[req.headers['content-type']],
+        'reqBadContentType', req
+      );
+    }
+  }
 
 }
