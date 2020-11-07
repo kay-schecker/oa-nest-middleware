@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { MiddlewareErrorService } from './middleware-error.service';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { MiddlewareSkipError } from './middleware-skip.error';
 
 const exceptions = {
   reqOperationNotFound: false,
@@ -73,7 +74,7 @@ describe('MiddlewareErrorService', () => {
     describe('throw', () => {
 
       it('throws no exception for reqOperationNotFound', () => {
-        expect(() => fixture.throw('reqOperationNotFound')).not.toThrow();
+        expect(() => fixture.throw('reqOperationNotFound')).toThrow(MiddlewareSkipError);
       })
 
       it('throws the correct exception for reqUnauthorized', () => {

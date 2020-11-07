@@ -7,6 +7,7 @@ import {
   UnauthorizedException
 } from '@nestjs/common';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
+import { MiddlewareSkipError } from './middleware-skip.error';
 
 type K = keyof MiddlewareConfig['exceptions'];
 
@@ -38,7 +39,7 @@ export class MiddlewareErrorService {
   throw(name: K) {
 
     if (this.options.exceptions && this.options.exceptions[name] === false) {
-      return;
+      throw new MiddlewareSkipError()
     }
 
     const e = (this.options.exceptions && this.options.exceptions[name]) || this.defaultExceptions[name];
