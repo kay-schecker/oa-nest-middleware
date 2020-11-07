@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { flattenDeep, trimEnd, trimStart, uniq } from 'lodash';
 
 import { MiddlewareAdapter } from './middleware-adapter.interface';
-import { MiddlewareConfig } from '../config/openapi-middleware.config';
+import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { parse as parseUrl } from 'url';
 import jsonpath from 'jsonpath';
 

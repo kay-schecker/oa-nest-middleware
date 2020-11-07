@@ -1,27 +1,28 @@
 import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { OpenApiMiddlewareService } from './openapi-middleware.service';
 import { dereference } from 'swagger-parser';
 import { OpenAPIV3 } from 'openapi-types';
-import { MiddlewareConfig } from './config/openapi-middleware.config';
 import { MiddlewareDefaultAdapter } from './adapter/middleware-default-adapter';
 import { MiddlewareErrorService } from './error/middleware-error.service';
+import { MiddlewareService } from './middleware.service';
+import { MiddlewareConfig } from './config/middleware-config.interface';
+import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 
 @Module({
   providers: [
     MiddlewareErrorService,
   ]
 })
-export class OpenApiMiddlewareModule implements NestModule {
+export class MiddlewareModule implements NestModule {
 
   static async register(options: MiddlewareConfig): Promise<DynamicModule> {
 
     options.spec = await dereference(options.spec) as OpenAPIV3.Document;
 
     return {
-      module: OpenApiMiddlewareModule,
+      module: MiddlewareModule,
       providers: [
         {provide: MiddlewareConfig, useValue: options},
-        {provide: MiddlewareDefaultAdapter, useClass: options.adapter || MiddlewareDefaultAdapter},
+        {provide: MiddlewareAdapter, useClass: options.adapter || MiddlewareDefaultAdapter},
       ],
     }
   }
@@ -32,7 +33,7 @@ export class OpenApiMiddlewareModule implements NestModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    const mw = consumer.apply(OpenApiMiddlewareService)
+    const mw = consumer.apply(MiddlewareService)
 
     if (this.options.excludes && this.options.excludes.length > 0) {
       mw.exclude(...this.options.excludes);

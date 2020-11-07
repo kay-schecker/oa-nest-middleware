@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { OpenApiMiddlewareModule } from './lib';
+import { MiddlewareModule } from './lib';
 
 @Module({
   imports: [
-    OpenApiMiddlewareModule.register({
+    MiddlewareModule.register({
       spec: require('./specs/petstore.json'),
     }),
   ],

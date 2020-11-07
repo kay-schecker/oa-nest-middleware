@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { MiddlewareConfig } from '../config/openapi-middleware.config';
+import { MiddlewareConfig } from '../config/middleware-config.interface';
 
 type K = keyof MiddlewareConfig['exceptions'];
 

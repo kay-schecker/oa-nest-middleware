@@ -1,2 +1,2 @@
-export * from './openapi-middleware.module';
-export * from './openapi-middleware.service';
+export * from './middleware.module';
+export * from './middleware.service';

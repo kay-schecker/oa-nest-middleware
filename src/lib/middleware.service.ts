@@ -1,11 +1,11 @@
 import { Request } from 'express';
 import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
-import { MiddlewareConfig } from './config/openapi-middleware.config';
 import { MiddlewareErrorService } from './error/middleware-error.service';
+import { MiddlewareConfig } from './config/middleware-config.interface';
 
 @Injectable()
-export class OpenApiMiddlewareService implements NestMiddleware {
+export class MiddlewareService implements NestMiddleware {
 
   constructor(
     @Inject(MiddlewareAdapter) private readonly adapter: MiddlewareAdapter,
