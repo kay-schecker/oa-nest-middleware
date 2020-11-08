@@ -1,57 +1,29 @@
-import {
-  BadRequestException,
-  HttpException,
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException
-} from '@nestjs/common';
-import { MiddlewareConfig } from '../config/middleware-config.interface';
-import { MiddlewareSkipError } from './middleware-skip.error';
+import { Injectable, Type } from '@nestjs/common';
 
-type K = keyof MiddlewareConfig['exceptions'];
+type E = Type<Error> | Error | (() => Error);
 
 @Injectable()
 export class MiddlewareErrorService {
 
-  private readonly defaultExceptions: Required<MiddlewareConfig['exceptions']> = {
-    reqOperationNotFound: new NotFoundException(),
-    reqBadHeader: new BadRequestException(),
-    reqContentType: new BadRequestException(),
-    reqBadContentType: new BadRequestException(),
-    resBadContentType: new BadRequestException(),
-    reqUnauthorized: new UnauthorizedException(),
+  throwIfFalsy(val: any, error: E) {
+    this.throwIfTruthy(!val, error);
   }
 
-  constructor(
-    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig,
-  ) {
+  throwIfTruthy(val: any, error: E) {
+    val && this.throw(error);
   }
 
-  throwIfFalsy(val: any, name: K) {
-    this.throwIfTruthy(!val, name);
-  }
+  throw(error: E) {
 
-  throwIfTruthy(val: any, name: K) {
-    val && this.throw(name);
-  }
+    if (typeof error === 'function') {
+      if (error.prototype) {
+        throw new (error as Type<any>)
+      }
 
-  throw(name: K) {
-
-    if (this.options.exceptions && this.options.exceptions[name] === false) {
-      throw new MiddlewareSkipError()
+      throw (error as () => Error)();
     }
 
-    const e = (this.options.exceptions && this.options.exceptions[name]) || this.defaultExceptions[name];
-
-    if (typeof e === 'function') {
-      throw e();
-    }
-
-    if (e instanceof HttpException) {
-      throw e;
-    }
-
+    throw error;
   }
 
 }

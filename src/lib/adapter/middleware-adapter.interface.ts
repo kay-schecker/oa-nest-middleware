@@ -3,7 +3,7 @@ import { OpenAPIV3 as _ } from 'openapi-types';
 
 export const MiddlewareAdapter = Symbol('MiddlewareAdapter');
 
-type ReturnType<T> = Promise<T> | T | Promise<undefined> | undefined
+type ReturnType<T> = Promise<T> | T
 
 export interface MiddlewareAdapter {
 

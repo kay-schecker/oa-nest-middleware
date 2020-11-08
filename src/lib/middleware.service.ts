@@ -1,9 +1,10 @@
 import { Request } from 'express';
-import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { MiddlewareErrorService } from './error/middleware-error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
-import { MiddlewareSkipError } from './error/middleware-skip.error';
+import { difference } from 'lodash';
+import { OperationForbiddenException } from './exceptions';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware {
@@ -17,27 +18,22 @@ export class MiddlewareService implements NestMiddleware {
 
   async use(req: Request, res: Response, next: Function) {
 
-    try {
-      const operation = await this.adapter.getOperationByRequest(req);
-      this.errorService.throwIfFalsy(operation, 'reqOperationNotFound');
-      this.adapter.validateRequestHeaders(req, operation);
+    const operation = await this.adapter.getOperationByRequest(req);
+    this.adapter.validateRequestHeaders(req, operation);
 
-      const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
-      this.errorService.throwIfFalsy(responseContentType, 'resBadContentType');
+    const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
+    const requiredPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
 
-      const requiredPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
+    if (requiredPermissions && requiredPermissions.length > 0) {
+      const grantedPermissions = await this.adapter.getGrantedPermissionsByRequest(req);
+      this.errorService.throwIfTruthy(grantedPermissions.length < 1, UnauthorizedException);
 
-      if (requiredPermissions && requiredPermissions.length > 0) {
-        const grantedPermissions = await this.adapter.getGrantedPermissionsByRequest(req);
-
-        if (!grantedPermissions || grantedPermissions.length < 1) {
-          this.errorService.throw('reqUnauthorized');
-        }
-      }
-    } catch (e) {
-      if (!(e instanceof MiddlewareSkipError)) {
-        throw e;
-      }
+      const missingOperationPermissions = difference(requiredPermissions, grantedPermissions);
+      this.errorService.throwIfTruthy(missingOperationPermissions.length > 0, new OperationForbiddenException(
+        grantedPermissions,
+        requiredPermissions,
+        missingOperationPermissions,
+      ))
     }
 
     next();

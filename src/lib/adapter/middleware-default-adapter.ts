@@ -1,13 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
 import { flattenDeep, trimEnd, trimStart, uniq } from 'lodash';
+import jsonpath from 'jsonpath';
+import { parse as parseUrl } from 'url';
 
 import { MiddlewareAdapter } from './middleware-adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
-import { parse as parseUrl } from 'url';
-import jsonpath from 'jsonpath';
 import { MiddlewareErrorService } from '../error/middleware-error.service';
+import * as e from '../exceptions';
 
 @Injectable()
 export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
@@ -47,6 +48,8 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
         }
       }
     }
+
+    this.errorService.throw(e.OperationNotFoundException);
   }
 
   getRequiredPermissionsByOperation(operation: _.OperationObject): string[] {
@@ -81,21 +84,22 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
     return []
   }
 
-  getResponseContentTypeByRequest = (req: Request) => 'application/json';
+  getResponseContentTypeByRequest = (req: Request) => {
+    // this.errorService.throw(e.ContentTypeNotSupportedException);
+    return 'application/json';
+  };
 
   validateRequestHeaders(req: Request, operation: _.OperationObject) {
+
+    const reqContentType = req.headers['content-type'];
+
     // a content-type header was sent but unexpected
-    this.errorService.throwIfTruthy(
-      req.headers['content-type'] && !operation.requestBody,
-      'reqBadHeader',
-    );
+    this.errorService.throwIfTruthy(reqContentType && !operation.requestBody, e.BadHeaderException);
 
     if (operation.requestBody) {
       // the requested content-type is not supported
-      this.errorService.throwIfFalsy(
-        operation.requestBody[req.headers['content-type']],
-        'reqBadContentType',
-      );
+      const {content} = (operation.requestBody as _.RequestBodyObject)
+      this.errorService.throwIfFalsy(content[reqContentType], BadRequestException);
     }
   }
 

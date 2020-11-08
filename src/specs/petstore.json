@@ -69,6 +69,15 @@
         "tags": [
           "pets"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Null response"
