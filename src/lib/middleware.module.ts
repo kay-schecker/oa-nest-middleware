@@ -34,7 +34,7 @@ export class MiddlewareModule implements NestModule {
   }
 
   constructor(
-    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig
+    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig,
   ) {
   }
 
@@ -45,6 +45,7 @@ export class MiddlewareModule implements NestModule {
       mw.exclude(...this.options.excludes);
     }
 
+    // @todo register only for routes define in spec? Feature flag?
     mw.forRoutes(...(this.options.routes || ['*']));
   }
 
