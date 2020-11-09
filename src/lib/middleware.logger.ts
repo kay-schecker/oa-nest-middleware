@@ -4,6 +4,6 @@ import { Injectable, Logger } from '@nestjs/common';
 export class MiddlewareLogger extends Logger {
 
   constructor() {
-    super('Middleware', true);
+    super('OAMiddleware', true);
   }
 }

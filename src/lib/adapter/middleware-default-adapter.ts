@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
-import { flattenDeep, trimEnd, trimStart, uniq } from 'lodash';
+import { trimEnd, trimStart, uniq } from 'lodash';
 import jsonpath from 'jsonpath';
 import { parse as parseUrl } from 'url';
 
@@ -9,8 +9,6 @@ import { MiddlewareAdapter } from './middleware-adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { MiddlewareErrorService } from '../error/middleware-error.service';
 import * as e from '../exceptions';
-import { MiddlewareAuthGuards } from '../auth/guard/middleware-auth-guards.token';
-import { MiddlewareAuthGuard } from '../auth/guard/middleware-auth-guard';
 
 @Injectable()
 export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
@@ -23,7 +21,6 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
 
   constructor(
     @Inject(MiddlewareConfig) protected readonly options: MiddlewareConfig,
-    @Inject(MiddlewareAuthGuards) protected readonly securitySchemes: Record<string, MiddlewareAuthGuard>,
     private readonly errorService: MiddlewareErrorService,
   ) {
     this.spec = options.spec
@@ -52,11 +49,6 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
     }
 
     this.errorService.throw(e.OperationNotFoundException);
-  }
-
-  getAuthGuardsForOperation(operation: _.OperationObject) {
-    const schemes = uniq(flattenDeep(operation.security?.map((a) => Object.keys(a)))) || [];
-    return new Map(schemes.map((name) => [name, this.securitySchemes[name]]));
   }
 
   getRequiredPermissionsByOperation(operation: _.OperationObject) {

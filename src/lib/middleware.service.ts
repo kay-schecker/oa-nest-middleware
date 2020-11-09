@@ -1,24 +1,36 @@
 import { Request } from 'express';
-import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { MiddlewareErrorService } from './error/middleware-error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
 import { difference, uniq } from 'lodash';
 import { MiddlewareAuthGuard } from './auth/guard/middleware-auth-guard';
 import { OperationForbiddenException } from './exceptions';
-import { MiddlewareAuthGuards } from './auth/guard/middleware-auth-guards.token';
 import { MiddlewareLogger } from './middleware.logger';
+import { MiddlewareAuthGuardFactory } from './auth/guard/middleware-auth-guard.factory';
+import { OpenAPIV3 } from 'openapi-types';
 
 @Injectable()
-export class MiddlewareService implements NestMiddleware {
+export class MiddlewareService implements NestMiddleware, OnModuleInit {
+
+  protected readonly document: OpenAPIV3.Document;
+  protected readonly guards = new Map<string, MiddlewareAuthGuard>();
 
   constructor(
     @Inject(MiddlewareAdapter) private readonly adapter: MiddlewareAdapter,
-    @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig,
-    @Inject(MiddlewareAuthGuards) protected readonly guards: Record<string, MiddlewareAuthGuard>,
+    @Inject(MiddlewareConfig) options: MiddlewareConfig,
+    private readonly guardFactory: MiddlewareAuthGuardFactory,
     private readonly errorService: MiddlewareErrorService,
     private readonly logger: MiddlewareLogger,
   ) {
+    this.document = options.spec;
+  }
+
+  async onModuleInit() {
+    for (const [name, scheme] of Object.entries(this.document?.components?.securitySchemes || {})) {
+      this.guards.set(name, await this.guardFactory.create(scheme as OpenAPIV3.SecuritySchemeObject));
+      this.logger.log(`Created AuthGuard for security scheme ${name}`)
+    }
   }
 
   async use(req: Request, res: Response, next: Function) {
@@ -37,6 +49,7 @@ export class MiddlewareService implements NestMiddleware {
     if (operationPermissions.size > 0) {
 
       const authResults = await this.authenticate(req, operationPermissions.keys());
+
       this.errorService.throwIfTruthy(authResults.size < 1, UnauthorizedException)
 
       const permission = new Map<string, {
@@ -82,6 +95,8 @@ export class MiddlewareService implements NestMiddleware {
 
   protected async authenticate(req: Request, guardNames: IterableIterator<string>) {
 
+    const guards = await this.guards;
+
     const map = new Map<string, {
       guard: MiddlewareAuthGuard,
       getPermissions: () => Promise<string[]>,
@@ -89,7 +104,7 @@ export class MiddlewareService implements NestMiddleware {
 
     for (const name of guardNames) {
 
-      const guard = this.guards[name];
+      const guard = guards.get(name);
 
       if (!await guard.canHandle(req)) {
         continue;
@@ -109,6 +124,7 @@ export class MiddlewareService implements NestMiddleware {
     }
 
     return map;
+
   }
 
 }
