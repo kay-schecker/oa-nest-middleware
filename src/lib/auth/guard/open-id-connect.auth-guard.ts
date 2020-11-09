@@ -11,7 +11,7 @@ import OpenIdSecurityScheme = OpenAPIV3.OpenIdSecurityScheme;
 
 const ttl = 300;
 
-export class OpenIdConnectAuthGuard extends AuthGuard<JWT.completeResult> {
+export class OpenIdConnectAuthGuard extends AuthGuard<OpenIdSecurityScheme, JWT.completeResult> {
 
   public static readonly type = 'openIdConnect';
 

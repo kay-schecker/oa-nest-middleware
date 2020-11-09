@@ -1,21 +1,20 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { OpenAPIV3, OpenAPIV3 as _ } from 'openapi-types';
+import { OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
 import { trimEnd, trimStart, uniq } from 'lodash';
 import jsonpath from 'jsonpath';
 import { parse as parseUrl } from 'url';
 
-import { MiddlewareAdapter } from './middleware-adapter.interface';
+import { Adapter } from './adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { ErrorService } from '../error/error.service';
 import * as e from '../exceptions';
 import { AuthGuardFactory } from '../auth/guard/auth-guard.factory';
-import { AuthGuard } from '../auth/guard/auth-guard';
 
 @Injectable()
-export class MiddlewareDefaultAdapter implements MiddlewareAdapter, OnModuleInit {
+export class OpenApiV3Adapter implements Adapter, OnModuleInit {
 
-  public readonly guards = new Map<string, AuthGuard>();
+  public readonly guards = new Map();
 
   protected readonly basePaths: string[];
   protected readonly document: MiddlewareConfig['spec'];
@@ -44,7 +43,7 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter, OnModuleInit
 
   async onModuleInit() {
     for (const [name, scheme] of Object.entries(this.document?.components?.securitySchemes || {})) {
-      this.guards.set(name, await this.guardFactory.create(scheme as OpenAPIV3.SecuritySchemeObject));
+      this.guards.set(name, await this.guardFactory.create(scheme as _.SecuritySchemeObject));
     }
   }
 

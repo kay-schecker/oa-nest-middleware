@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import { Inject, Injectable, NestMiddleware, OnModuleInit, UnauthorizedException } from '@nestjs/common';
-import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { ErrorService } from './error/error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
 import { difference, uniq } from 'lodash';
@@ -9,6 +8,7 @@ import { OperationForbiddenException } from './exceptions';
 import { MiddlewareLogger } from './middleware.logger';
 import { OpenAPIV3 } from 'openapi-types';
 import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
+import { Adapter } from './adapter/adapter.interface';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware, OnModuleInit {
@@ -16,7 +16,7 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
   protected readonly document: OpenAPIV3.Document;
 
   constructor(
-    @Inject(MiddlewareAdapter) private readonly adapter: MiddlewareAdapter,
+    @Inject(Adapter) private readonly adapter: Adapter,
     @Inject(MiddlewareConfig) options: MiddlewareConfig,
     private readonly guardFactory: AuthGuardFactory,
     private readonly errorService: ErrorService,

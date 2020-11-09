@@ -13,15 +13,13 @@ export class AuthGuardFactory {
   }
 
   public async create(scheme: OpenAPIV3.SecuritySchemeObject): Promise<AuthGuard> {
-    const guard = await this.moduleRef.create(this.getGuardType(scheme));
-    await guard.init(scheme as any);
-    return guard;
-  }
-
-  private getGuardType(scheme: OpenAPIV3.SecuritySchemeObject) {
     switch (scheme.type) {
       case 'openIdConnect':
-        return OpenIdConnectAuthGuard;
+
+        const guard = await this.moduleRef.create(OpenIdConnectAuthGuard);
+        await guard.init(scheme)
+        return guard;
+
       default:
         throw new Error(`Security scheme of type "${scheme.type}" currently not supported, please open a pull request`)
     }
