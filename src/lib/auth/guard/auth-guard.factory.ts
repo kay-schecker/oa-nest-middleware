@@ -2,19 +2,17 @@ import { OpenAPIV3 } from 'openapi-types';
 import { OpenIdConnectAuthGuard } from './open-id-connect.auth-guard';
 import { ModuleRef } from '@nestjs/core';
 import { Injectable } from '@nestjs/common';
-import { MiddlewareAuthGuard } from './middleware-auth-guard';
-import { MiddlewareLogger } from '../../middleware.logger';
+import { AuthGuard } from './auth-guard';
 
 @Injectable()
-export class MiddlewareAuthGuardFactory {
+export class AuthGuardFactory {
 
   constructor(
     private readonly moduleRef: ModuleRef,
-    private readonly logger: MiddlewareLogger,
   ) {
   }
 
-  public async create(scheme: OpenAPIV3.SecuritySchemeObject): Promise<MiddlewareAuthGuard> {
+  public async create(scheme: OpenAPIV3.SecuritySchemeObject): Promise<AuthGuard> {
     const guard = await this.moduleRef.create(this.getGuardType(scheme));
     await guard.init(scheme as any);
     return guard;

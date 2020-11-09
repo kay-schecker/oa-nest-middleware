@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import { OpenAPIV3 } from 'openapi-types';
 
-export abstract class MiddlewareAuthGuard<AuthenticationResult = unknown> {
+export abstract class AuthGuard<AuthenticationResult = unknown> {
 
   abstract async init(scheme: OpenAPIV3.SecuritySchemeObject);
 

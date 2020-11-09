@@ -1,11 +1,14 @@
 import { Request } from 'express';
 import { OpenAPIV3 as _ } from 'openapi-types';
+import { AuthGuard } from '../auth/guard/auth-guard';
 
 export const MiddlewareAdapter = Symbol('MiddlewareAdapter');
 
 type ReturnType<T> = Promise<T> | T
 
 export interface MiddlewareAdapter {
+
+  guards: Map<string, AuthGuard>
 
   getOperationByRequest(req: Request): ReturnType<_.OperationObject>
 

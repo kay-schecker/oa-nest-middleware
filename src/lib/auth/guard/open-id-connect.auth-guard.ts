@@ -1,17 +1,17 @@
-import { OpenAPIV3 as _ } from 'openapi-types';
+import { OpenAPIV3 } from 'openapi-types';
 import { Client, Issuer, } from 'openid-client';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Request } from 'express';
 import { JWKS, JWT } from 'jose';
-import { MiddlewareAuthGuard } from './middleware-auth-guard';
-import { compact, startsWith, flatten } from 'lodash';
+import { AuthGuard } from './auth-guard';
+import { compact, flatten, startsWith } from 'lodash';
 import * as cacheManager from 'cache-manager';
+import OpenIdSecurityScheme = OpenAPIV3.OpenIdSecurityScheme;
 
 const ttl = 300;
-type Config = _.OpenIdSecurityScheme;
 
-export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResult> {
+export class OpenIdConnectAuthGuard extends AuthGuard<JWT.completeResult> {
 
   public static readonly type = 'openIdConnect';
 
@@ -23,7 +23,7 @@ export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResu
 
   private readonly jwtCache = cacheManager.caching({store: 'memory', max: 100, ttl})
 
-  async init(cfg: Config) {
+  async init(cfg: OpenIdSecurityScheme) {
     this.description = cfg.description;
     this.openIdConnectUrl = cfg.openIdConnectUrl;
     this.client = of(this.openIdConnectUrl).pipe(

@@ -1,5 +1,5 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { OpenAPIV3 as _ } from 'openapi-types';
+import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { OpenAPIV3, OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
 import { trimEnd, trimStart, uniq } from 'lodash';
 import jsonpath from 'jsonpath';
@@ -7,33 +7,44 @@ import { parse as parseUrl } from 'url';
 
 import { MiddlewareAdapter } from './middleware-adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
-import { MiddlewareErrorService } from '../error/middleware-error.service';
+import { ErrorService } from '../error/error.service';
 import * as e from '../exceptions';
+import { AuthGuardFactory } from '../auth/guard/auth-guard.factory';
+import { AuthGuard } from '../auth/guard/auth-guard';
 
 @Injectable()
-export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
+export class MiddlewareDefaultAdapter implements MiddlewareAdapter, OnModuleInit {
+
+  public readonly guards = new Map<string, AuthGuard>();
 
   protected readonly basePaths: string[];
-  protected readonly spec: MiddlewareConfig['spec'];
+  protected readonly document: MiddlewareConfig['spec'];
 
   protected readonly paths: Map<string, _.PathItemObject> = new Map();
   protected readonly regPaths: Map<RegExp, _.PathItemObject> = new Map();
 
   constructor(
     @Inject(MiddlewareConfig) protected readonly options: MiddlewareConfig,
-    private readonly errorService: MiddlewareErrorService,
+    private readonly errorService: ErrorService,
+    private readonly guardFactory: AuthGuardFactory,
   ) {
-    this.spec = options.spec
-    this.basePaths = uniq(this.spec.servers.map(({url}) => parseUrl(url).pathname));
+    this.document = options.spec
+    this.basePaths = uniq(this.document.servers.map(({url}) => parseUrl(url).pathname));
 
-    for (const path of Object.keys(this.spec.paths)) {
+    for (const path of Object.keys(this.document.paths)) {
       for (const basePath of this.basePaths) {
         const p = `${trimEnd(basePath, '/')}/${trimStart(path, '/')}`;
         const r = p.replace(/(\{([a-z]+)\})/igm, '(?<$2>.+)');
 
-        this.paths.set(p, this.spec.paths[path]);
-        this.regPaths.set(new RegExp(`^${r}$`, 'i'), this.spec.paths[path]);
+        this.paths.set(p, this.document.paths[path]);
+        this.regPaths.set(new RegExp(`^${r}$`, 'i'), this.document.paths[path]);
       }
+    }
+  }
+
+  async onModuleInit() {
+    for (const [name, scheme] of Object.entries(this.document?.components?.securitySchemes || {})) {
+      this.guards.set(name, await this.guardFactory.create(scheme as OpenAPIV3.SecuritySchemeObject));
     }
   }
 

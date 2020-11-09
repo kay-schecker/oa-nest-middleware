@@ -2,18 +2,18 @@ import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from '@
 import { dereference } from 'swagger-parser';
 import { OpenAPIV3 } from 'openapi-types';
 import { MiddlewareDefaultAdapter } from './adapter/middleware-default-adapter';
-import { MiddlewareErrorService } from './error/middleware-error.service';
+import { ErrorService } from './error/error.service';
 import { MiddlewareService } from './middleware.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
-import { MiddlewareAuthGuardFactory } from './auth/guard/middleware-auth-guard.factory';
 import { MiddlewareLogger } from './middleware.logger';
+import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
 
 @Module({
   providers: [
     MiddlewareLogger,
-    MiddlewareAuthGuardFactory,
-    MiddlewareErrorService,
+    AuthGuardFactory,
+    ErrorService,
   ]
 })
 export class MiddlewareModule implements NestModule {

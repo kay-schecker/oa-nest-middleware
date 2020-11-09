@@ -1,19 +1,19 @@
 import { Test } from '@nestjs/testing';
-import { MiddlewareErrorService } from './middleware-error.service';
+import { ErrorService } from './error.service';
 import { BadHeaderException } from '../exceptions';
 
 describe('MiddlewareErrorService', () => {
 
-  let fixture: MiddlewareErrorService;
+  let fixture: ErrorService;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
-        MiddlewareErrorService,
+        ErrorService,
       ]
     }).compile();
 
-    fixture = moduleRef.get(MiddlewareErrorService);
+    fixture = moduleRef.get(ErrorService);
   })
 
   describe('API', () => {

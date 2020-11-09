@@ -3,7 +3,7 @@ import { Injectable, Type } from '@nestjs/common';
 type E = Type<Error> | Error | (() => Error);
 
 @Injectable()
-export class MiddlewareErrorService {
+export class ErrorService {
 
   throwIfFalsy(val: any, error: E) {
     this.throwIfTruthy(!val, error);

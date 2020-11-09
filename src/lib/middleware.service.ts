@@ -1,36 +1,32 @@
 import { Request } from 'express';
 import { Inject, Injectable, NestMiddleware, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
-import { MiddlewareErrorService } from './error/middleware-error.service';
+import { ErrorService } from './error/error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
 import { difference, uniq } from 'lodash';
-import { MiddlewareAuthGuard } from './auth/guard/middleware-auth-guard';
+import { AuthGuard } from './auth/guard/auth-guard';
 import { OperationForbiddenException } from './exceptions';
 import { MiddlewareLogger } from './middleware.logger';
-import { MiddlewareAuthGuardFactory } from './auth/guard/middleware-auth-guard.factory';
 import { OpenAPIV3 } from 'openapi-types';
+import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware, OnModuleInit {
 
   protected readonly document: OpenAPIV3.Document;
-  protected readonly guards = new Map<string, MiddlewareAuthGuard>();
 
   constructor(
     @Inject(MiddlewareAdapter) private readonly adapter: MiddlewareAdapter,
     @Inject(MiddlewareConfig) options: MiddlewareConfig,
-    private readonly guardFactory: MiddlewareAuthGuardFactory,
-    private readonly errorService: MiddlewareErrorService,
+    private readonly guardFactory: AuthGuardFactory,
+    private readonly errorService: ErrorService,
     private readonly logger: MiddlewareLogger,
   ) {
     this.document = options.spec;
   }
 
   async onModuleInit() {
-    for (const [name, scheme] of Object.entries(this.document?.components?.securitySchemes || {})) {
-      this.guards.set(name, await this.guardFactory.create(scheme as OpenAPIV3.SecuritySchemeObject));
-      this.logger.log(`Created AuthGuard for security scheme ${name}`)
-    }
+    //
   }
 
   async use(req: Request, res: Response, next: Function) {
@@ -95,10 +91,10 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
 
   protected async authenticate(req: Request, guardNames: IterableIterator<string>) {
 
-    const guards = await this.guards;
+    const guards = await this.adapter.guards;
 
     const map = new Map<string, {
-      guard: MiddlewareAuthGuard,
+      guard: AuthGuard,
       getPermissions: () => Promise<string[]>,
     }>();
 
