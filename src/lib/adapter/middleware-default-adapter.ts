@@ -9,6 +9,8 @@ import { MiddlewareAdapter } from './middleware-adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { MiddlewareErrorService } from '../error/middleware-error.service';
 import * as e from '../exceptions';
+import { MiddlewareAuthGuards } from '../auth/guard/middleware-auth-guards.token';
+import { MiddlewareAuthGuard } from '../auth/guard/middleware-auth-guard';
 
 @Injectable()
 export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
@@ -21,6 +23,7 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
 
   constructor(
     @Inject(MiddlewareConfig) protected readonly options: MiddlewareConfig,
+    @Inject(MiddlewareAuthGuards) protected readonly securitySchemes: Record<string, MiddlewareAuthGuard>,
     private readonly errorService: MiddlewareErrorService,
   ) {
     this.spec = options.spec
@@ -35,7 +38,6 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
         this.regPaths.set(new RegExp(`^${r}$`, 'i'), this.spec.paths[path]);
       }
     }
-
   }
 
   async getOperationByRequest(req: Request) {
@@ -52,15 +54,25 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
     this.errorService.throw(e.OperationNotFoundException);
   }
 
-  getRequiredPermissionsByOperation(operation: _.OperationObject): string[] {
-    if (!operation.security || operation.security.length < 1) {
-      return;
-    }
-
-    return flattenDeep(operation.security.map((sec) => Object.values(sec)));
+  getAuthGuardsForOperation(operation: _.OperationObject) {
+    const schemes = uniq(flattenDeep(operation.security.map((a) => Object.keys(a))));
+    return new Map(schemes.map((name) => [name, this.securitySchemes[name]]));
   }
 
-  getRequiredPermissionsBySchema(schema: _.SchemaObject): string[] {
+  getRequiredPermissionsByOperation(operation: _.OperationObject) {
+    const map = new Map();
+    for (const sec of (operation.security || [])) {
+      for (const [name, perm] of Object.entries(sec)) {
+        map.set(name, perm);
+      }
+    }
+    return map;
+  }
+
+  getRequiredPermissionsBySchema(schema: _.SchemaObject) {
+
+    return new Map();
+
     const nodes = jsonpath.nodes(schema.properties, '$..["x-permissions"]');
     return nodes.reduce((acc, node) => {
 

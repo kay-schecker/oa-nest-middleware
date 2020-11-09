@@ -3,7 +3,8 @@ import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nest
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { MiddlewareErrorService } from './error/middleware-error.service';
 import { MiddlewareConfig } from './config/middleware-config.interface';
-import { difference } from 'lodash';
+import { difference, uniq } from 'lodash';
+import { MiddlewareAuthGuard } from './auth/guard/middleware-auth-guard';
 import { OperationForbiddenException } from './exceptions';
 
 @Injectable()
@@ -22,22 +23,82 @@ export class MiddlewareService implements NestMiddleware {
     this.adapter.validateRequestHeaders(req, operation);
 
     const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
-    const requiredPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
+    const operationPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
+    // const schemaPermissions = await this.adapter.getRequiredPermissionsBySchema(operation.requestBody[]);
 
-    if (requiredPermissions && requiredPermissions.length > 0) {
-      const grantedPermissions = await this.adapter.getGrantedPermissionsByRequest(req);
-      this.errorService.throwIfTruthy(grantedPermissions.length < 1, UnauthorizedException);
+    const guards = await this.adapter.getAuthGuardsForOperation(operation);
 
-      const missingOperationPermissions = difference(requiredPermissions, grantedPermissions);
-      this.errorService.throwIfTruthy(missingOperationPermissions.length > 0, new OperationForbiddenException(
-        grantedPermissions,
-        requiredPermissions,
-        missingOperationPermissions,
-      ))
+    if (guards.size > 0) {
+
+      const authResults = await this.authenticate(req, guards);
+      this.errorService.throwIfTruthy(authResults.size < 1, UnauthorizedException)
+
+      const permission = new Map<string, {
+        granted: string[]
+        missing: string[]
+        required: {
+          forAll: string[]
+          forOperation: string[]
+        };
+      }>();
+
+      for (const [name, auth] of authResults) {
+
+        const forOperation = operationPermissions.get(name) || [];
+
+        const res = {
+          granted: await auth.getPermissions(),
+          required: {
+            forAll: uniq([...forOperation]),
+            forOperation,
+          },
+        }
+
+        const missingPermissions = difference(res.required.forAll, res.granted);
+        permission.set(name, {...res, missing: missingPermissions});
+
+        if (missingPermissions.length < 1) {
+          next();
+          return;
+        }
+
+      }
+
+      this.errorService.throw(new OperationForbiddenException(permission));
+
     }
 
     next();
 
+  }
+
+  protected async authenticate(req: Request, guards: Map<string, MiddlewareAuthGuard>) {
+
+    const map = new Map<string, {
+      guard: MiddlewareAuthGuard,
+      getPermissions: () => Promise<string[]>,
+    }>();
+
+    for (const [name, guard] of guards) {
+
+      if (!await guard.canHandle(req)) {
+        continue;
+      }
+
+      const result = await guard.authenticate(req);
+
+      if (!result || result.length < 1) {
+        continue;
+      }
+
+      map.set(name, {
+        guard,
+        getPermissions: () => guard.getPermissions(result)
+      });
+
+    }
+
+    return map;
   }
 
 }

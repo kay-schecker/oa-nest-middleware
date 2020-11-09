@@ -15,6 +15,13 @@
   "paths": {
     "/pets": {
       "get": {
+        "security": [
+          {
+            "oidc": [
+              "user:read"
+            ]
+          }
+        ],
         "summary": "List all pets",
         "operationId": "listPets",
         "tags": [
@@ -139,6 +146,12 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "oidc": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "http://localhost:3000/.well-known/openid-configuration"
+      }
+    },
     "schemas": {
       "Pet": {
         "type": "object",
