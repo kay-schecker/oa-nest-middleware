@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ExpressAdapter } from '@nestjs/platform-express';
 
 import * as request from 'supertest';
 import { lowerCase as lc } from 'lodash';
@@ -6,55 +7,35 @@ import { Server } from 'net';
 import * as express from 'express';
 import { JWKS, JWT } from 'jose';
 import * as getPort from 'get-port';
+
 import { MiddlewareModule } from './lib';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppController } from './app.controller';
 
 describe('E2E', () => {
 
+  let jwt: string;
   let server: Server;
   let app: express.Application;
-
-  let jwt: string;
   let keystore: JWKS.KeyStore;
 
   beforeAll(async () => {
-
     keystore = new JWKS.KeyStore()
     await keystore.generate('RSA')
+    const [key] = keystore.all();
 
-    const [firstKey] = keystore.all();
-
-
-    jwt = JWT.sign({
-        permissions: ['user:read']
-      },
-      firstKey,
-      {
-        algorithm: 'RS256',
-        expiresIn: '1 hour',
-        header: {
-          typ: 'JWT'
-        },
-        issuer: 'https://op.example.com'
-      }
-    );
-
-    console.log(jwt)
-
+    jwt = JWT.sign({permissions: ['user:read']}, key, {
+      algorithm: 'RS256',
+      header: {typ: 'JWT', expiresIn: '1 hour'},
+    });
   })
 
   beforeAll(async () => {
-
     const port = await getPort();
-    console.log('p', port)
     const spec = require('./specs/petstore.json');
     spec.components.securitySchemes.oidc.openIdConnectUrl = `http://localhost:${port}/.well-known/openid-configuration`
 
     const moduleRef = await Test.createTestingModule({
-      controllers: [
-        AppController,
-      ],
+      controllers: [AppController],
       imports: [
         await MiddlewareModule.register({
           spec: require('./specs/petstore.json'),
@@ -64,21 +45,19 @@ describe('E2E', () => {
     }).compile();
 
     app = express()
-    app.get('/.well-known/openid-configuration', (req, res) => {
-      res.json({
-        issuer: 'https://e2e.test',
-        jwks_uri: `http://localhost:${port}/.well-known/jwks.json`,
-      }).send();
-    });
-
-    app.get('/.well-known/jwks.json', (req, res) => {
-      res.json(keystore.toJWKS()).send()
-    });
+      .get('/.well-known/jwks.json', (req, res) => {
+        res.json(keystore.toJWKS()).send()
+      })
+      .get('/.well-known/openid-configuration', (req, res) => {
+        res.json({
+          issuer: 'https://e2e.test',
+          jwks_uri: `http://localhost:${port}/.well-known/jwks.json`,
+        }).send();
+      })
 
     const nestApp = await moduleRef.createNestApplication(new ExpressAdapter(app)).init()
     await nestApp.listen(port)
     server = nestApp.getHttpServer()
-
   })
 
   it.each`
