@@ -1,10 +1,5 @@
 {
   "issuer": "https://kay-schecker.eu.auth0.com/",
-  "authorization_endpoint": "https://kay-schecker.eu.auth0.com/authorize",
-  "token_endpoint": "https://kay-schecker.eu.auth0.com/oauth/token",
-  "device_authorization_endpoint": "https://kay-schecker.eu.auth0.com/oauth/device/code",
-  "userinfo_endpoint": "https://kay-schecker.eu.auth0.com/userinfo",
-  "mfa_challenge_endpoint": "https://kay-schecker.eu.auth0.com/mfa/challenge",
   "jwks_uri": "http://localhost:3000/.well-known/jwks.json",
   "registration_endpoint": "https://kay-schecker.eu.auth0.com/oidc/register",
   "revocation_endpoint": "https://kay-schecker.eu.auth0.com/oauth/revoke",
