@@ -55,7 +55,7 @@ export class MiddlewareDefaultAdapter implements MiddlewareAdapter {
   }
 
   getAuthGuardsForOperation(operation: _.OperationObject) {
-    const schemes = uniq(flattenDeep(operation.security.map((a) => Object.keys(a))));
+    const schemes = uniq(flattenDeep(operation.security?.map((a) => Object.keys(a)))) || [];
     return new Map(schemes.map((name) => [name, this.securitySchemes[name]]));
   }
 

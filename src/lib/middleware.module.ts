@@ -8,9 +8,11 @@ import { MiddlewareConfig } from './config/middleware-config.interface';
 import { MiddlewareAdapter } from './adapter/middleware-adapter.interface';
 import { MiddlewareAuthGuards } from './auth/guard/middleware-auth-guards.token';
 import { MiddlewareAuthGuardFactory } from './auth/guard/middleware-auth-guard.factory';
+import { MiddlewareLogger } from './middleware.logger';
 
 @Module({
   providers: [
+    MiddlewareLogger,
     MiddlewareErrorService,
   ]
 })

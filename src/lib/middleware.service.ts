@@ -6,6 +6,8 @@ import { MiddlewareConfig } from './config/middleware-config.interface';
 import { difference, uniq } from 'lodash';
 import { MiddlewareAuthGuard } from './auth/guard/middleware-auth-guard';
 import { OperationForbiddenException } from './exceptions';
+import { MiddlewareAuthGuards } from './auth/guard/middleware-auth-guards.token';
+import { MiddlewareLogger } from './middleware.logger';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware {
@@ -13,24 +15,28 @@ export class MiddlewareService implements NestMiddleware {
   constructor(
     @Inject(MiddlewareAdapter) private readonly adapter: MiddlewareAdapter,
     @Inject(MiddlewareConfig) private readonly options: MiddlewareConfig,
+    @Inject(MiddlewareAuthGuards) protected readonly guards: Record<string, MiddlewareAuthGuard>,
     private readonly errorService: MiddlewareErrorService,
+    private readonly logger: MiddlewareLogger,
   ) {
   }
 
   async use(req: Request, res: Response, next: Function) {
+
+    // req.method = 'post'
+    this.logger.log('handle request')
 
     const operation = await this.adapter.getOperationByRequest(req);
     this.adapter.validateRequestHeaders(req, operation);
 
     const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
     const operationPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
-    // const schemaPermissions = await this.adapter.getRequiredPermissionsBySchema(operation.requestBody[]);
 
-    const guards = await this.adapter.getAuthGuardsForOperation(operation);
+    // console.log(operationPermissions)
 
-    if (guards.size > 0) {
+    if (operationPermissions.size > 0) {
 
-      const authResults = await this.authenticate(req, guards);
+      const authResults = await this.authenticate(req, operationPermissions.keys());
       this.errorService.throwIfTruthy(authResults.size < 1, UnauthorizedException)
 
       const permission = new Map<string, {
@@ -58,6 +64,7 @@ export class MiddlewareService implements NestMiddleware {
         permission.set(name, {...res, missing: missingPermissions});
 
         if (missingPermissions.length < 1) {
+          this.logger.log('handle request success')
           next();
           return;
         }
@@ -68,18 +75,21 @@ export class MiddlewareService implements NestMiddleware {
 
     }
 
+    this.logger.log('handle request success')
     next();
 
   }
 
-  protected async authenticate(req: Request, guards: Map<string, MiddlewareAuthGuard>) {
+  protected async authenticate(req: Request, guardNames: IterableIterator<string>) {
 
     const map = new Map<string, {
       guard: MiddlewareAuthGuard,
       getPermissions: () => Promise<string[]>,
     }>();
 
-    for (const [name, guard] of guards) {
+    for (const name of guardNames) {
+
+      const guard = this.guards[name];
 
       if (!await guard.canHandle(req)) {
         continue;

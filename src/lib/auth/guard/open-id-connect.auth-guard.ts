@@ -3,11 +3,14 @@ import { Client, Issuer, } from 'openid-client';
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Request } from 'express';
-import { JWT } from 'jose';
+import { JWKS, JWT } from 'jose';
 import { MiddlewareAuthGuard } from './middleware-auth-guard';
 import { compact, startsWith, flatten } from 'lodash';
+import * as cacheManager from 'cache-manager';
+
 
 type Config = _.OpenIdSecurityScheme;
+const ttl = 300;
 
 export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResult> {
 
@@ -17,7 +20,8 @@ export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResu
   public readonly openIdConnectUrl: string;
 
   private readonly client: Observable<Issuer<Client>>;
-  private readonly jwksClient: Observable<Issuer<Client>>;
+  private readonly keystore: Observable<JWKS.KeyStore>;
+  private readonly jwtCache = cacheManager.caching({store: 'memory', max: 100, ttl})
 
   public static async factory(cfg: _.OpenIdSecurityScheme) {
     return new OpenIdConnectAuthGuard({...cfg})
@@ -30,6 +34,10 @@ export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResu
     this.client = of(this.openIdConnectUrl).pipe(
       switchMap(connectUrl => Issuer.discover(connectUrl)),
     )
+
+    this.keystore = this.client.pipe(
+      switchMap(client => client.keystore())
+    );
   }
 
   async canHandle(req) {
@@ -42,17 +50,24 @@ export class OpenIdConnectAuthGuard extends MiddlewareAuthGuard<JWT.completeResu
   }
 
   async authenticate(req: Request) {
-    const client = await this.client.toPromise();
-    const keystore = await client.keystore();
-    const tokens = await this.getJWTs(req);
+    const res = await Promise.all((await this.getJWTs(req)).map(async (jwt) => {
+      const cachedItem = await this.jwtCache.get(jwt);
 
-    return compact(tokens.map((jwt) => {
+      if (cachedItem !== undefined) {
+        return cachedItem;
+      }
+
       try {
-        return JWT.verify(jwt, keystore, {complete: true});
+        const res = JWT.verify(jwt, await this.keystore.toPromise(), {complete: true});
+        await this.jwtCache.set(jwt, res, {ttl});
+        return res;
       } catch (e) {
+        await this.jwtCache.set(jwt, null, {ttl});
         return null;
       }
-    }))
+    }));
+
+    return compact(res)
   }
 
   async getPermissions(auth): Promise<string[]> {
