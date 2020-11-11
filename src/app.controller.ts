@@ -5,13 +5,11 @@ export class AppController {
 
   @Get('/pets')
   getPets(): string {
-    console.log('GET PETS')
     return 'HELLO PETS';
   }
 
   @Get('/posts')
   getPosts(): string {
-    console.log('GET POSTS')
     return 'HELLO POSTS';
   }
 
