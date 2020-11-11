@@ -1,12 +1,12 @@
+import * as cacheManager from 'cache-manager';
+import { Request } from 'express';
+import { JWKS, JWT } from 'jose';
+import { compact, flatten, startsWith } from 'lodash';
 import { OpenAPIV3 } from 'openapi-types';
 import { Client, Issuer, } from 'openid-client';
 import { Observable, of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
-import { Request } from 'express';
-import { JWKS, JWT } from 'jose';
+import { switchMap } from 'rxjs/operators';
 import { AuthGuard } from './auth-guard';
-import { compact, flatten, startsWith } from 'lodash';
-import * as cacheManager from 'cache-manager';
 import OpenIdSecurityScheme = OpenAPIV3.OpenIdSecurityScheme;
 
 const ttl = 300;

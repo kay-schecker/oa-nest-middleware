@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { ErrorService } from './error.service';
 import { BadHeaderException } from '../exceptions';
+import { ErrorService } from './error.service';
 
 describe('MiddlewareErrorService', () => {
 

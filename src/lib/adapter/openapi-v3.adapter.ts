@@ -1,15 +1,15 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { OpenAPIV3 as _ } from 'openapi-types';
 import { Request } from 'express';
-import { trimEnd, trimStart, uniq } from 'lodash';
 import jsonpath from 'jsonpath';
+import { trimEnd, trimStart, uniq } from 'lodash';
+import { OpenAPIV3 as _ } from 'openapi-types';
 import { parse as parseUrl } from 'url';
-
-import { Adapter } from './adapter.interface';
+import { AuthGuardFactory } from '../auth/guard/auth-guard.factory';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 import { ErrorService } from '../error/error.service';
 import * as e from '../exceptions';
-import { AuthGuardFactory } from '../auth/guard/auth-guard.factory';
+
+import { Adapter } from './adapter.interface';
 
 @Injectable()
 export class OpenApiV3Adapter implements Adapter, OnModuleInit {

@@ -1,14 +1,14 @@
-import { Request } from 'express';
 import { Inject, Injectable, NestMiddleware, OnModuleInit, UnauthorizedException } from '@nestjs/common';
-import { ErrorService } from './error/error.service';
-import { MiddlewareConfig } from './config/middleware-config.interface';
+import { Request } from 'express';
 import { difference, uniq } from 'lodash';
+import { OpenAPIV3 } from 'openapi-types';
+import { Adapter } from './adapter/adapter.interface';
 import { AuthGuard } from './auth/guard/auth-guard';
+import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
+import { MiddlewareConfig } from './config/middleware-config.interface';
+import { ErrorService } from './error/error.service';
 import { OperationForbiddenException } from './exceptions';
 import { MiddlewareLogger } from './middleware.logger';
-import { OpenAPIV3 } from 'openapi-types';
-import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
-import { Adapter } from './adapter/adapter.interface';
 
 @Injectable()
 export class MiddlewareService implements NestMiddleware, OnModuleInit {

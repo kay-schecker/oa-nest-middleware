@@ -1,8 +1,8 @@
-import { OpenAPIV3 } from 'openapi-types';
-import { OpenIdConnectAuthGuard } from './open-id-connect.auth-guard';
-import { ModuleRef } from '@nestjs/core';
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import { OpenAPIV3 } from 'openapi-types';
 import { AuthGuard } from './auth-guard';
+import { OpenIdConnectAuthGuard } from './open-id-connect.auth-guard';
 
 @Injectable()
 export class AuthGuardFactory {

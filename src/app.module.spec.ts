@@ -1,15 +1,15 @@
-import { Test } from '@nestjs/testing';
 import { ExpressAdapter } from '@nestjs/platform-express';
-
-import * as request from 'supertest';
+import { Test } from '@nestjs/testing';
+import * as express from 'express';
+import * as getPort from 'get-port';
+import { JWK, JWKS, JWT } from 'jose';
 import { lowerCase as lc } from 'lodash';
 import { Server } from 'net';
-import * as express from 'express';
-import { JWK, JWKS, JWT } from 'jose';
-import * as getPort from 'get-port';
+
+import * as request from 'supertest';
+import { AppController } from './app.controller';
 
 import { MiddlewareModule } from './lib';
-import { AppController } from './app.controller';
 
 describe('E2E', () => {
 

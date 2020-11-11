@@ -1,14 +1,14 @@
 import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { dereference } from 'swagger-parser';
-import { OpenAPIV3 } from 'openapi-types';
 import { startsWith } from 'lodash';
-import { ErrorService } from './error/error.service';
-import { MiddlewareService } from './middleware.service';
-import { MiddlewareConfig } from './config/middleware-config.interface';
-import { MiddlewareLogger } from './middleware.logger';
-import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
+import { OpenAPIV3 } from 'openapi-types';
+import { dereference } from 'swagger-parser';
 import { Adapter } from './adapter/adapter.interface';
 import { OpenApiV3Adapter } from './adapter/openapi-v3.adapter';
+import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
+import { MiddlewareConfig } from './config/middleware-config.interface';
+import { ErrorService } from './error/error.service';
+import { MiddlewareLogger } from './middleware.logger';
+import { MiddlewareService } from './middleware.service';
 
 @Module({
   providers: [
