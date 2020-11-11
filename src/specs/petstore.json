@@ -23,18 +23,10 @@
         "responses": {
           "200": {
             "description": "A paged array of pets",
-            "headers": {
-              "x-next": {
-                "description": "A link to the next page of responses",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Pets"
+                  "$ref": "#/components/schemas/Posts"
                 }
               }
             }
@@ -47,7 +39,7 @@
         "security": [
           {
             "oidc": [
-              "pets:r"
+              "pets:read"
             ]
           }
         ],
@@ -105,7 +97,7 @@
         "security": [
           {
             "oidc": [
-              "pets:w"
+              "pets:write"
             ]
           }
         ],
@@ -116,7 +108,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Error"
+                "$ref": "#/components/schemas/Pet"
               }
             }
           }
@@ -189,6 +181,27 @@
       }
     },
     "schemas": {
+      "Posts": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Post"
+        }
+      },
+      "Post": {
+        "type": "object",
+        "required": [
+          "title",
+          "text"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
       "Pet": {
         "type": "object",
         "required": [
@@ -203,8 +216,15 @@
           "name": {
             "type": "string"
           },
-          "tag": {
-            "type": "string"
+          "blocked": {
+            "type": "boolean",
+            "x-permission": [
+              {
+                "oidc": [
+                  "pets:admin"
+                ]
+              }
+            ]
           }
         }
       },

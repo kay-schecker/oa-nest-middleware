@@ -67,8 +67,8 @@ describe('E2E', () => {
     unauthorized: 'unauthorized',
     unauthenticated: 'unauthenticated',
     pets: {
-      reader: ['pets:r'],
-      admin: ['pets:r', 'pets:w'],
+      reader: ['pets:read'],
+      admin: ['pets:read', 'pets:write'],
     },
   };
 
@@ -78,38 +78,45 @@ describe('E2E', () => {
     }
   }
 
+  const none = undefined;
+  const get = 'get';
+  const post = 'post';
+  const json = 'application/json';
+  const text = 'application/text';
+
   it.each` 
-    permissions             | method    | contentType           | url            | status
+    #     | status | method  | url            | body    | permissions             | contentType
     
-    ${ROLE.unauthorized}    | ${'GET'}  | ${undefined}          | ${'/animals'}  | ${404}
-    ${ROLE.pets.admin}      | ${'GET'}  | ${undefined}          | ${'/animals'}  | ${404}
+    ${10} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.unauthorized}    | ${none}
+    ${11} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.pets.admin}      | ${none}
 
     // GET /posts (public endpoint)
-    ${ROLE.unauthorized}    | ${'GET'}  | ${undefined}          | ${'/posts'}    | ${200}
-    ${ROLE.unauthenticated} | ${'GET'}  | ${undefined}          | ${'/posts'}    | ${200}
+    ${20} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${ROLE.unauthorized}    | ${none}
+    ${21} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${ROLE.unauthenticated} | ${none}
 
     // GET /pets (application/json is not supported here)
-    ${ROLE.unauthorized}    | ${'GET'}  | ${'application/json'} | ${'/pets'}     | ${400}
-    ${ROLE.unauthenticated} | ${'GET'}  | ${'application/json'} | ${'/pets'}     | ${400}
-    ${ROLE.pets.admin}      | ${'GET'}  | ${'application/json'} | ${'/pets'}     | ${400}
+    ${30} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${json}
+    ${31} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${json}
+    ${32} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${json}
 
     // GET /pets (pets:r required)
-    ${ROLE.unauthorized}    | ${'GET'}  | ${undefined}          | ${'/pets'}     | ${401}
-    ${ROLE.unauthenticated} | ${'GET'}  | ${undefined}          | ${'/pets'}     | ${403}
-    ${ROLE.pets.admin}      | ${'GET'}  | ${undefined}          | ${'/pets'}     | ${200}
+    ${41} | ${401} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${none}
+    ${42} | ${403} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${none}
+    ${43} | ${200} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${none}
 
     // POST /pets (pets:w required)
-    ${ROLE.unauthorized}    | ${'POST'} | ${'application/json'} | ${'/pets'}     | ${401}
-    ${ROLE.unauthenticated} | ${'POST'} | ${'application/json'} | ${'/pets'}     | ${403}
-    ${ROLE.pets.admin}      | ${'POST'} | ${'application/json'} | ${'/pets'}     | ${201}
+    ${51} | ${401} | ${post} | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${json}
+    ${52} | ${403} | ${post} | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${json}
+    ${53} | ${201} | ${post} | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${json}
     
     // POST /pets (application/text is not supported here)
-    ${ROLE.pets.admin}      | ${'POST'} | ${'application/text'} | ${'/pets'}     | ${400}
+    ${60} | ${400} | ${post} | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${text}
 
     // POST /pets/123 (POST not supported here)
-    ${ROLE.pets.admin}      | ${'POST'} | ${'application/json'} | ${'/pets/123'} | ${404}
+    ${70} | ${404} | ${post} | ${'/pets/123'} | ${none} | ${ROLE.pets.admin}      | ${json}
 
-  `('$permissions: $method $url responds with $status', ({permissions, method, url, contentType, status}) => {
+  `('[$#] $status $method $url', ({permissions, method, url, contentType, status}) => {
+
     const testReq = request(server)[(lc(method as 'get' | 'post'))](url);
 
     if (permissions !== 'unauthorized') {
