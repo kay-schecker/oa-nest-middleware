@@ -84,6 +84,10 @@ describe('E2E', () => {
     ${ROLE.unauthorized}    | ${'GET'}  | ${undefined}          | ${'/animals'}  | ${404}
     ${ROLE.pets.admin}      | ${'GET'}  | ${undefined}          | ${'/animals'}  | ${404}
 
+    // GET /posts (public endpoint)
+    ${ROLE.unauthorized}    | ${'GET'}  | ${undefined}          | ${'/posts'}    | ${200}
+    ${ROLE.unauthenticated} | ${'GET'}  | ${undefined}          | ${'/posts'}    | ${200}
+
     // GET /pets (application/json is not supported here)
     ${ROLE.unauthorized}    | ${'GET'}  | ${'application/json'} | ${'/pets'}     | ${400}
     ${ROLE.unauthenticated} | ${'GET'}  | ${'application/json'} | ${'/pets'}     | ${400}

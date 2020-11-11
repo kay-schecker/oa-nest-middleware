@@ -31,7 +31,6 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
 
   async use(req: Request, res: Response, next: Function) {
 
-    // req.method = 'post'
     this.logger.log('handle request')
 
     const operation = await this.adapter.getOperationByRequest(req);
@@ -39,8 +38,6 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
 
     const responseContentType = await this.adapter.getResponseContentTypeByRequest(req);
     const operationPermissions = await this.adapter.getRequiredPermissionsByOperation(operation);
-
-    // console.log(operationPermissions)
 
     if (operationPermissions.size > 0) {
 
