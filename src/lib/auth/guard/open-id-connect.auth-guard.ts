@@ -31,9 +31,7 @@ export class OpenIdConnectAuthGuard extends AuthGuard<OpenIdSecurityScheme, JWT.
     )
 
     this.keystore = this.client.pipe(
-      tap(c => console.log('FFF', c)),
       switchMap(client => client.keystore()),
-      tap(c => console.log('CCCC', c)),
     );
   }
 
@@ -49,7 +47,6 @@ export class OpenIdConnectAuthGuard extends AuthGuard<OpenIdSecurityScheme, JWT.
   async authenticate(req: Request) {
     const res = await Promise.all((await this.getJWTs(req)).map(async (jwt) => {
       const cachedJWT = await this.jwtCache.get(jwt);
-      console.log('cachedJWT', cachedJWT)
 
       if (cachedJWT !== undefined) {
         return cachedJWT;
@@ -77,9 +74,7 @@ export class OpenIdConnectAuthGuard extends AuthGuard<OpenIdSecurityScheme, JWT.
   }
 
   protected getJWTs(req: Request) {
-    const jwts = this.getAuthorizations(req).map(a => a.replace(/bearer/i, '').trim());
-    console.log('JWTS', jwts);
-    return jwts;
+    return this.getAuthorizations(req).map(a => a.replace(/bearer/i, '').trim());
   }
 
 }

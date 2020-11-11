@@ -18,7 +18,7 @@
         "security": [
           {
             "oidc": [
-              "user:read"
+              "pets:r"
             ]
           }
         ],
@@ -73,6 +73,13 @@
       "post": {
         "summary": "Create a pet",
         "operationId": "createPets",
+        "security": [
+          {
+            "oidc": [
+              "pets:w"
+            ]
+          }
+        ],
         "tags": [
           "pets"
         ],
