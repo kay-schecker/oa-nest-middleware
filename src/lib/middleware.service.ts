@@ -98,21 +98,16 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
     for (const name of guardNames) {
 
       const guard = guards.get(name);
-
       if (!await guard.canHandle(req)) {
         continue;
       }
 
       const result = await guard.authenticate(req);
-
       if (!result || result.length < 1) {
         continue;
       }
 
-      map.set(name, {
-        guard,
-        getPermissions: () => guard.getPermissions(result)
-      });
+      map.set(name, {guard, getPermissions: () => guard.getPermissions(result)});
 
     }
 
