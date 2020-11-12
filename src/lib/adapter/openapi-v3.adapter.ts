@@ -102,11 +102,6 @@ export class OpenApiV3Adapter implements Adapter<_.OperationObject, _.SchemaObje
     return propertyPermissions;
   }
 
-  getGrantedPermissions(req: Request): string[] {
-    // @todo implement me
-    return []
-  }
-
   // @todo (not in use)
   getResponseContentTypeByRequest = (req: Request) => {
     // this.errorService.throw(e.ContentTypeNotSupportedException);

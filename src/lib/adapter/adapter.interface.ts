@@ -16,8 +16,6 @@ export interface Adapter<Operation = unknown, Schema = unknown> {
   getResponseContentTypeByRequest(req: Request): ReturnType<string>
 
   // permissions
-  getGrantedPermissions(req: Request): ReturnType<string[]>
-
   getPropertyPermissions(schema: Schema): ReturnType<Map<string, Map<string, string[]>>>
 
   getOperationPermissions(operation: Operation): ReturnType<Map<string, string[]>>
