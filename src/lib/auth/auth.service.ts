@@ -4,12 +4,7 @@ import { difference, has, uniq } from 'lodash';
 
 import { Adapter } from '../adapter/adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
-
-interface ValidationResultForGuard {
-  authenticated: boolean
-  authorized: boolean
-  permissions: any // @todo
-}
+import { AuthResult } from './auth-result.model';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +15,7 @@ export class AuthService {
   ) {
   }
 
-  async checkPermissions(operation, requestBodySchema, req: Request): Promise<Map<string, ValidationResultForGuard>> {
+  async checkPermissions(operation, requestBodySchema, req: Request): Promise<AuthResult> {
 
     const operationPermissions = await this.adapter.getOperationPermissions(operation);
     const reqBodyPermissions = requestBodySchema && await this.adapter.getPropertyPermissions(requestBodySchema);
@@ -49,21 +44,22 @@ export class AuthService {
           // check only the permissions for the properties that were sent.
           .filter(([propPath]) => has(req.body, propPath))
           // validate ...
-          .reduce((acc, [propPath, propPerms]) => {
+          .reduce((pAcc, [propPath, propPerms]) => {
             const missingPropPerms = difference(propPerms, granted);
-            missingPropPerms.length > 0 && acc.set(propPath, missingPropPerms);
-            return acc;
-          }, new Map())
+            return missingPropPerms.length > 0 ? {...pAcc, [propPath]: missingPropPerms} : pAcc;
+          }, {})
       }
 
-      acc.set(guardName, {
-        authorized: grantedPermissions.has(guardName),
-        authenticated: missing.forOperation.length < 1 && missing.forProperty.size < 1,
-        permissions: {required, missing, granted},
-      })
+      return {
+        ...acc,
+        [guardName]: {
+          authorized: grantedPermissions.has(guardName),
+          authenticated: missing.forOperation.length < 1 && Object.keys(missing.forProperty).length < 1,
+          permissions: {required, missing, granted},
+        }
+      }
 
-      return acc;
-    }, new Map());
+    }, {});
 
   }
 

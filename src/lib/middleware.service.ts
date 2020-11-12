@@ -35,16 +35,17 @@ export class MiddlewareService implements NestMiddleware, OnModuleInit {
 
     const requestBodySchema = this.adapter.getRequestBodySchema(req, operation);
     const result = await this.authService.checkPermissions(operation, requestBodySchema, req);
+    const resultEntries = Object.entries(result)
 
-    if (result.size > 0) {
-      const authorizedGuards = Array.from(result.entries()).filter(([, {authorized}]) => authorized);
+    if (resultEntries.length > 0) {
+      const authorizedGuards = resultEntries.filter(([, {authorized}]) => authorized);
       if (authorizedGuards.length < 1) {
         this.errorService.throw(UnauthorizedException);
       }
 
       const authenticatedGuards = authorizedGuards.filter(([, {authenticated}]) => authenticated);
       if (authenticatedGuards.length < 1) {
-        this.errorService.throw(OperationForbiddenException);
+        this.errorService.throw(new OperationForbiddenException(result));
       }
     }
 
