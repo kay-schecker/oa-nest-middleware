@@ -1,12 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { difference, has, uniq } from 'lodash';
+
 import { Adapter } from '../adapter/adapter.interface';
 import { MiddlewareConfig } from '../config/middleware-config.interface';
 
 interface ValidationResultForGuard {
-  authenticated: boolean,
-  authorized: boolean,
+  authenticated: boolean
+  authorized: boolean
+  permissions: any // @todo
 }
 
 @Injectable()
@@ -28,12 +30,11 @@ export class AuthService {
       ...(reqBodyPermissions ? reqBodyPermissions.keys() : []),
     ]);
 
-    const grantedPermissions = await this.getGrantedPermissions(req, operationPermissions.keys());
+    const grantedPermissions = await this.getGrantedPermissions(req, guardNames);
 
     return guardNames.reduce((acc, guardName) => {
 
       const granted = grantedPermissions.get(guardName);
-      const authorized = grantedPermissions.has(guardName);
 
       const required = {
         forOperation: operationPermissions.get(guardName),
@@ -44,22 +45,21 @@ export class AuthService {
 
       const missing = {
         forOperation: difference(required.forOperation, granted),
-        forProperty: required.forProperty.reduce((acc, [propPath, propPerms]) => {
-
-          if (has(req.body, propPath)) {
+        forProperty: required.forProperty
+          // check only the permissions for the properties that were sent.
+          .filter(([propPath]) => has(req.body, propPath))
+          // validate ...
+          .reduce((acc, [propPath, propPerms]) => {
             const missingPropPerms = difference(propPerms, granted);
-            if (missingPropPerms.length > 0) {
-              acc.set(propPath, missingPropPerms);
-            }
-          }
-
-          return acc;
-        }, new Map())
+            missingPropPerms.length > 0 && acc.set(propPath, missingPropPerms);
+            return acc;
+          }, new Map())
       }
 
       acc.set(guardName, {
+        authorized: grantedPermissions.has(guardName),
         authenticated: missing.forOperation.length < 1 && missing.forProperty.size < 1,
-        authorized,
+        permissions: {required, missing, granted},
       })
 
       return acc;
@@ -67,13 +67,12 @@ export class AuthService {
 
   }
 
-  protected async getGrantedPermissions(req: Request, guardNames: IterableIterator<string>) {
+  protected async getGrantedPermissions(req: Request, guardNames: string[]) {
 
     const guards = await this.adapter.guards;
     const map = new Map<string, string[]>();
 
     for (const name of guardNames) {
-
       const guard = guards.get(name);
       if (!await guard.canHandle(req)) {
         continue;
@@ -85,7 +84,6 @@ export class AuthService {
       }
 
       map.set(name, await guard.getPermissions(result));
-
     }
 
     return map;
