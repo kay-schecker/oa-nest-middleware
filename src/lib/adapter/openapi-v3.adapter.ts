@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { Request } from 'express';
-import jsonpath from 'jsonpath';
+import * as jsonpath from 'jsonpath';
 import { trimEnd, trimStart, uniq } from 'lodash';
 import { OpenAPIV3 as _ } from 'openapi-types';
 import { parse as parseUrl } from 'url';
@@ -12,7 +12,7 @@ import * as e from '../exceptions';
 import { Adapter } from './adapter.interface';
 
 @Injectable()
-export class OpenApiV3Adapter implements Adapter, OnModuleInit {
+export class OpenApiV3Adapter implements Adapter<_.OperationObject, _.SchemaObject>, OnModuleInit {
 
   public readonly guards = new Map();
 
@@ -47,7 +47,7 @@ export class OpenApiV3Adapter implements Adapter, OnModuleInit {
     }
   }
 
-  async getOperationByRequest(req: Request) {
+  async getOperation(req: Request) {
     for (const [regExp, value] of this.regPaths.entries()) {
       if (req.baseUrl.match(regExp)) {
         for (const method in value) {
@@ -61,7 +61,17 @@ export class OpenApiV3Adapter implements Adapter, OnModuleInit {
     this.errorService.throw(e.OperationNotFoundException);
   }
 
-  getRequiredPermissionsByOperation(operation: _.OperationObject) {
+  getRequestBodySchema(req: Request, operation: _.OperationObject) {
+
+    if (!operation.requestBody) {
+      return;
+    }
+
+    const {content} = operation.requestBody as _.RequestBodyObject;
+    return content[req.header('content-type')].schema as _.SchemaObject;
+  }
+
+  getOperationPermissions(operation: _.OperationObject) {
     const map = new Map();
     for (const sec of (operation.security || [])) {
       for (const [name, perm] of Object.entries(sec)) {
@@ -71,33 +81,33 @@ export class OpenApiV3Adapter implements Adapter, OnModuleInit {
     return map;
   }
 
-  getRequiredPermissionsBySchema(schema: _.SchemaObject) {
+  getPropertyPermissions(schema: _.SchemaObject) {
 
-    return new Map();
+    const propertyPermissions = new Map();
+    const nodes = jsonpath.nodes(schema, '$..["x-permission"]');
 
-    const nodes = jsonpath.nodes(schema.properties, '$..["x-permissions"]');
-    return nodes.reduce((acc, node) => {
+    for (const {path, value} of nodes) {
+      for (const sec of (value || [])) {
+        for (const [name, perm] of Object.entries(sec)) {
+          if (!propertyPermissions.has(name)) {
+            propertyPermissions.set(name, new Map())
+          }
 
-      const propPath = node.path.slice(1, -1).join('.');
-
-      for (const permission of node.value) {
-
-        if (!acc[propPath]) {
-          acc[propPath] = [];
+          const propPath = path.slice(1, -1).join('.').split('properties.').join('');
+          propertyPermissions.get(name).set(propPath, perm)
         }
-
-        acc[propPath] = acc[propPath].concat(permission);
       }
+    }
 
-      return acc;
-    }, {});
+    return propertyPermissions;
   }
 
-  getGrantedPermissionsByRequest(req: Request): string[] {
+  getGrantedPermissions(req: Request): string[] {
     // @todo implement me
     return []
   }
 
+  // @todo (not in use)
   getResponseContentTypeByRequest = (req: Request) => {
     // this.errorService.throw(e.ContentTypeNotSupportedException);
     return 'application/json';

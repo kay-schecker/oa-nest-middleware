@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 
 @Controller()
 export class AppController {
@@ -14,7 +14,7 @@ export class AppController {
   }
 
   @Post('/pets')
-  createPet(): string {
+  createPet(@Body() pet: any): string {
     return 'HELLO PETS';
   }
 

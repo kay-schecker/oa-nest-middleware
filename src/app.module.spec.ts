@@ -68,14 +68,21 @@ describe('E2E', () => {
     unauthenticated: 'unauthenticated',
     pets: {
       reader: ['pets:read'],
-      admin: ['pets:read', 'pets:write'],
+      writer: ['pets:write'],
+      admin: ['pets:read', 'pets:write', 'pets:admin'],
     },
   };
 
   const MODEL = {
-    pets: {
-      admin: {},
-    }
+    cat: {
+      id: 1,
+      name: 'Cat',
+    },
+    dog: {
+      id: 2,
+      name: 'Dog',
+      blocked: false,
+    },
   }
 
   const none = undefined;
@@ -83,6 +90,7 @@ describe('E2E', () => {
   const post = 'post';
   const json = 'application/json';
   const text = 'application/text';
+  const {dog, cat} = MODEL;
 
   it.each` 
     #     | status | method  | url            | body    | permissions             | contentType
@@ -104,10 +112,15 @@ describe('E2E', () => {
     ${42} | ${403} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${none}
     ${43} | ${200} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${none}
 
-    // POST /pets (pets:w required)
-    ${51} | ${401} | ${post} | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${json}
-    ${52} | ${403} | ${post} | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${json}
-    ${53} | ${201} | ${post} | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${json}
+    // POST /pets (cat = pets:write required)
+    ${51} | ${401} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.unauthorized}    | ${json}
+    ${52} | ${403} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.unauthenticated} | ${json}
+    ${53} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.pets.writer}     | ${json}
+    ${54} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.pets.admin}      | ${json}
+    
+    // POST /pets (dog = pets:write + pets:admin required)
+    ${55} | ${403} | ${post} | ${'/pets'}     | ${dog}  | ${ROLE.pets.writer}     | ${json}
+    ${56} | ${201} | ${post} | ${'/pets'}     | ${dog}  | ${ROLE.pets.admin}      | ${json}
     
     // POST /pets (application/text is not supported here)
     ${60} | ${400} | ${post} | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${text}
@@ -115,9 +128,9 @@ describe('E2E', () => {
     // POST /pets/123 (POST not supported here)
     ${70} | ${404} | ${post} | ${'/pets/123'} | ${none} | ${ROLE.pets.admin}      | ${json}
 
-  `('[$#] $status $method $url', ({permissions, method, url, contentType, status}) => {
+  `('[$#] $status $method $url', ({permissions, method, url, contentType, status, body}) => {
 
-    const testReq = request(server)[(lc(method as 'get' | 'post'))](url);
+    const testReq: request.Test = request(server)[(lc(method as 'get' | 'post'))](url);
 
     if (permissions !== 'unauthorized') {
       permissions = permissions === 'unauthenticated' ? [] : permissions
@@ -125,6 +138,7 @@ describe('E2E', () => {
       testReq.set({'Authorization': `Bearer ${jwt}`});
     }
 
+    body !== undefined && testReq.send(body)
     contentType && testReq.set('content-type', contentType);
     return testReq.expect(status);
   })

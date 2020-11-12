@@ -1,26 +1,28 @@
 import { Request } from 'express';
-import { OpenAPIV3 as _ } from 'openapi-types';
 import { AuthGuard } from '../auth/guard/auth-guard';
 
 export const Adapter = Symbol('Adapter');
 
 type ReturnType<T> = Promise<T> | T
 
-export interface Adapter {
+export interface Adapter<Operation = unknown, Schema = unknown> {
 
   guards: Map<string, AuthGuard>
 
-  getOperationByRequest(req: Request): ReturnType<_.OperationObject>
+  getOperation(req: Request): ReturnType<Operation>
+
+  getRequestBodySchema(req: Request, operation: Operation): ReturnType<Schema | undefined>
 
   getResponseContentTypeByRequest(req: Request): ReturnType<string>
 
   // permissions
-  getGrantedPermissionsByRequest(req: Request): ReturnType<string[]>
+  getGrantedPermissions(req: Request): ReturnType<string[]>
 
-  getRequiredPermissionsBySchema(schema: _.SchemaObject): ReturnType<Map<string, string[]>>
-  getRequiredPermissionsByOperation(operation: _.OperationObject): ReturnType<Map<string, string[]>>
+  getPropertyPermissions(schema: Schema): ReturnType<Map<string, Map<string, string[]>>>
+
+  getOperationPermissions(operation: Operation): ReturnType<Map<string, string[]>>
 
   // validations
-  validateRequestHeaders(req: Request, operation: _.OperationObject);
+  validateRequestHeaders(req: Request, operation: Operation);
 
 }

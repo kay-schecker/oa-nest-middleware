@@ -4,6 +4,7 @@ import { OpenAPIV3 } from 'openapi-types';
 import { dereference } from 'swagger-parser';
 import { Adapter } from './adapter/adapter.interface';
 import { OpenApiV3Adapter } from './adapter/openapi-v3.adapter';
+import { AuthService } from './auth/auth.service';
 import { AuthGuardFactory } from './auth/guard/auth-guard.factory';
 import { MiddlewareConfig } from './config/middleware-config.interface';
 import { ErrorService } from './error/error.service';
@@ -13,6 +14,7 @@ import { MiddlewareService } from './middleware.service';
 @Module({
   providers: [
     MiddlewareLogger,
+    AuthService,
     AuthGuardFactory,
     ErrorService,
   ]
