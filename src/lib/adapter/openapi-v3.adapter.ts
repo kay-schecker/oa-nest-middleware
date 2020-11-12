@@ -84,7 +84,7 @@ export class OpenApiV3Adapter implements Adapter<_.OperationObject, _.SchemaObje
   getPropertyPermissions(schema: _.SchemaObject) {
 
     const propertyPermissions = new Map();
-    const nodes = jsonpath.nodes(schema, '$..["x-permission"]');
+    const nodes = jsonpath.nodes(schema, '$..["x-security"]');
 
     for (const {path, value} of nodes) {
       for (const sec of (value || [])) {

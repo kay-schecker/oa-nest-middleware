@@ -85,6 +85,14 @@ describe('E2E', () => {
     },
   }
 
+  const RES = {
+    S400: {statusCode: 400, message: 'Bad Request'},
+    S401: {statusCode: 401, message: 'Unauthorized'},
+    S403: {statusCode: 403, message: 'Forbidden'},
+    S404: {statusCode: 404, message: 'Not Found'},
+    EARR: [],
+  }
+
   const none = undefined;
   const get = 'get';
   const post = 'post';
@@ -93,42 +101,42 @@ describe('E2E', () => {
   const {dog, cat} = MODEL;
 
   it.each` 
-    #     | status | method  | url            | reqBody | permissions             | contentType
+    #     | status | method  | url            | reqBody | resBody     | permissions             | contentType
     
-    ${10} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.unauthorized}    | ${none}
-    ${11} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.pets.admin}      | ${none}
+    ${10} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${RES.S404} | ${ROLE.unauthorized}    | ${none}
+    ${11} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${RES.S404} | ${ROLE.pets.admin}      | ${none}
 
     // GET /posts (public endpoint)
-    ${20} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${ROLE.unauthorized}    | ${none}
-    ${21} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${ROLE.unauthenticated} | ${none}
+    ${20} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${RES.EARR} | ${ROLE.unauthorized}    | ${none}
+    ${21} | ${200} | ${get}  | ${'/posts'}    | ${none} | ${RES.EARR} | ${ROLE.unauthenticated} | ${none}
 
     // GET /pets (application/json is not supported here)
-    ${30} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${json}
-    ${31} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${json}
-    ${32} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${json}
+    ${30} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${RES.S400} | ${ROLE.unauthorized}    | ${json}
+    ${31} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${RES.S400} | ${ROLE.unauthenticated} | ${json}
+    ${32} | ${400} | ${get}  | ${'/pets'}     | ${none} | ${RES.S400} | ${ROLE.pets.admin}      | ${json}
 
     // GET /pets (pets:r required)
-    ${41} | ${401} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthorized}    | ${none}
-    ${42} | ${403} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.unauthenticated} | ${none}
-    ${43} | ${200} | ${get}  | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${none}
+    ${41} | ${401} | ${get}  | ${'/pets'}     | ${none} | ${RES.S401} | ${ROLE.unauthorized}    | ${none}
+    ${42} | ${403} | ${get}  | ${'/pets'}     | ${none} | ${RES.S403} | ${ROLE.unauthenticated} | ${none}
+    ${43} | ${200} | ${get}  | ${'/pets'}     | ${none} | ${RES.EARR} | ${ROLE.pets.admin}      | ${none}
 
     // POST /pets (cat = pets:write required)
-    ${51} | ${401} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.unauthorized}    | ${json}
-    ${52} | ${403} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.unauthenticated} | ${json}
-    ${53} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.pets.writer}     | ${json}
-    ${54} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${ROLE.pets.admin}      | ${json}
+    ${51} | ${401} | ${post} | ${'/pets'}     | ${cat}  | ${RES.S401} | ${ROLE.unauthorized}    | ${json}
+    ${52} | ${403} | ${post} | ${'/pets'}     | ${cat}  | ${RES.S403} | ${ROLE.unauthenticated} | ${json}
+    ${53} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${cat}      | ${ROLE.pets.writer}     | ${json}
+    ${54} | ${201} | ${post} | ${'/pets'}     | ${cat}  | ${cat}      | ${ROLE.pets.admin}      | ${json}
     
     // POST /pets (dog = pets:write + pets:admin required)
-    ${55} | ${403} | ${post} | ${'/pets'}     | ${dog}  | ${ROLE.pets.writer}     | ${json}
-    ${56} | ${201} | ${post} | ${'/pets'}     | ${dog}  | ${ROLE.pets.admin}      | ${json}
+    ${55} | ${403} | ${post} | ${'/pets'}     | ${dog}  | ${RES.S403} | ${ROLE.pets.writer}     | ${json}
+    ${56} | ${201} | ${post} | ${'/pets'}     | ${dog}  | ${dog}      | ${ROLE.pets.admin}      | ${json}
     
     // POST /pets (application/text is not supported here)
-    ${60} | ${400} | ${post} | ${'/pets'}     | ${none} | ${ROLE.pets.admin}      | ${text}
+    ${60} | ${400} | ${post} | ${'/pets'}     | ${none} | ${RES.S400} | ${ROLE.pets.admin}      | ${text}
 
     // POST /pets/123 (POST not supported here)
-    ${70} | ${404} | ${post} | ${'/pets/123'} | ${none} | ${ROLE.pets.admin}      | ${json}
+    ${70} | ${404} | ${post} | ${'/pets/123'} | ${none} | ${RES.S404} | ${ROLE.pets.admin}      | ${json}
 
-  `('[$#] $status $method $url', ({permissions, method, url, contentType, status, reqBody}) => {
+  `('[$#] $status $method $url', ({permissions, method, url, contentType, status, reqBody, resBody}) => {
 
     const testReq: request.Test = request(server)[(lc(method as 'get' | 'post'))](url);
 
@@ -140,7 +148,9 @@ describe('E2E', () => {
 
     reqBody !== undefined && testReq.send(reqBody)
     contentType && testReq.set('content-type', contentType);
-    return testReq.expect(status);
+    return testReq
+      .expect('Content-Type', /json/)
+      .expect(status, resBody)
   })
 
 })

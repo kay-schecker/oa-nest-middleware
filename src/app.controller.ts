@@ -4,18 +4,18 @@ import { Body, Controller, Get, Post } from '@nestjs/common';
 export class AppController {
 
   @Get('/pets')
-  getPets(): string {
-    return 'HELLO PETS';
+  getPets() {
+    return [];
   }
 
   @Get('/posts')
-  getPosts(): string {
-    return 'HELLO POSTS';
+  getPosts() {
+    return [];
   }
 
   @Post('/pets')
-  createPet(@Body() pet: any): string {
-    return 'HELLO PETS';
+  createPet(@Body() pet: any) {
+    return pet
   }
 
 }
