@@ -1,15 +1,3 @@
 {
-  "branches": ["master"],
-  "plugins": [
-    "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
-    ["@semantic-release/npm", {
-      "npmPublish": true,
-      "pkgRoot": "dist",
-      "tarballDir": "dist"
-    }],
-    ["@semantic-release/github", {
-      "assets": "dist/*.tgz"
-    }]
-  ]
+  "branches": ["master"]
 }
