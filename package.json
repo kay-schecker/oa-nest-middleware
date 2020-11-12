@@ -1,5 +1,5 @@
 {
-  "name": "oa-nest-middleware",
+  "name": "@kay-schecker/oa-nest-middleware",
   "version": "0.0.0-development",
   "description": "",
   "author": "",
@@ -84,6 +84,7 @@
     "url": "https://github.com/kay-schecker/oa-nest-middleware.git"
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "restricted",
+    "registry": "https://kay-schecker.bytesafe.dev/r/default"
   }
 }
