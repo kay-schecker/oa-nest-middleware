@@ -66,10 +66,10 @@
     "typescript": "4.0.5"
   },
   "files": [
-    "dist/**"
+    "dist/lib/**"
   ],
-  "types": "./dist/main.d.ts",
-  "main": "./dist/main.js",
+  "types": "./dist/lib/index.d.ts",
+  "main": "./dist/lib/index.js",
   "jest": {
     "moduleFileExtensions": [
       "js",
