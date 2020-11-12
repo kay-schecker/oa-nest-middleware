@@ -93,7 +93,7 @@ describe('E2E', () => {
   const {dog, cat} = MODEL;
 
   it.each` 
-    #     | status | method  | url            | body    | permissions             | contentType
+    #     | status | method  | url            | reqBody | permissions             | contentType
     
     ${10} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.unauthorized}    | ${none}
     ${11} | ${404} | ${get}  | ${'/animals'}  | ${none} | ${ROLE.pets.admin}      | ${none}
@@ -128,7 +128,7 @@ describe('E2E', () => {
     // POST /pets/123 (POST not supported here)
     ${70} | ${404} | ${post} | ${'/pets/123'} | ${none} | ${ROLE.pets.admin}      | ${json}
 
-  `('[$#] $status $method $url', ({permissions, method, url, contentType, status, body}) => {
+  `('[$#] $status $method $url', ({permissions, method, url, contentType, status, reqBody}) => {
 
     const testReq: request.Test = request(server)[(lc(method as 'get' | 'post'))](url);
 
@@ -138,7 +138,7 @@ describe('E2E', () => {
       testReq.set({'Authorization': `Bearer ${jwt}`});
     }
 
-    body !== undefined && testReq.send(body)
+    reqBody !== undefined && testReq.send(reqBody)
     contentType && testReq.set('content-type', contentType);
     return testReq.expect(status);
   })

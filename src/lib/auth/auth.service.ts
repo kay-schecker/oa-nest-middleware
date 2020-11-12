@@ -69,8 +69,8 @@ export class AuthService {
 
   protected async getGrantedPermissions(req: Request, guardNames: string[]) {
 
-    const guards = await this.adapter.guards;
     const map = new Map<string, string[]>();
+    const guards = await this.adapter.guards;
 
     for (const name of guardNames) {
       const guard = guards.get(name);
@@ -79,11 +79,9 @@ export class AuthService {
       }
 
       const result = await guard.authenticate(req);
-      if (!result || result.length < 1) {
-        continue;
+      if (result && result.length > 0) {
+        map.set(name, await guard.getPermissions(result));
       }
-
-      map.set(name, await guard.getPermissions(result));
     }
 
     return map;
