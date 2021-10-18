@@ -30,7 +30,7 @@
     "jose": "2.0.3",
     "jsonpath": "1.0.2",
     "jsonwebtoken": "8.5.1",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "openapi-types": "7.0.1",
     "openid-client": "4.2.1",
     "reflect-metadata": "0.1.13",
